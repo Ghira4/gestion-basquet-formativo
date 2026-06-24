@@ -330,9 +330,27 @@ export default function VentasPage() {
               <button onClick={() => setShowPago(false)} style={{ color: 'var(--text-muted)' }}><X size={18} /></button>
             </div>
 
-            <div className="glass-sm p-3 flex items-center justify-between mb-5">
+            <div className="glass-sm p-4 flex items-center justify-between mb-5">
               <span style={{ color: 'var(--text-muted)' }}>Total a cobrar</span>
-              <span className="text-2xl font-bold text-white">${total.toFixed(2)}</span>
+              <span className="text-3xl font-bold text-white">${total.toFixed(2)}</span>
+            </div>
+
+            {/* Atajos de pago rápido */}
+            <div className="grid grid-cols-2 gap-2 mb-5">
+              <button
+                className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-sm font-semibold transition-all"
+                style={{ background: 'rgba(74,222,128,0.12)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.3)' }}
+                onClick={() => { setMontoEfectivo(String(total)); setMontoTransferencia('') }}
+              >
+                <Banknote size={15} /> Todo efectivo
+              </button>
+              <button
+                className="flex items-center justify-center gap-2 py-3 px-3 rounded-xl text-sm font-semibold transition-all"
+                style={{ background: 'rgba(85,189,251,0.12)', color: 'var(--primary)', border: '1px solid rgba(85,189,251,0.3)' }}
+                onClick={() => { setMontoTransferencia(String(total)); setMontoEfectivo('') }}
+              >
+                <CreditCard size={15} /> Todo transferencia
+              </button>
             </div>
 
             <div className="flex flex-col gap-4">

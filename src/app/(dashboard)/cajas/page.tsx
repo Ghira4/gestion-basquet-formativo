@@ -236,9 +236,20 @@ export default function CajasPage() {
 
               <div>
                 <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-muted)' }}>Monto *</label>
-                <input className="input-glass" type="number" step="0.01" min="0.01" placeholder="$0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} required />
-                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  Disponible en {form.origen}: <span className="text-white">${saldos[form.origen].toFixed(2)}</span>
+                <div className="flex gap-2">
+                  <input className="input-glass" type="number" step="0.01" min="0.01" placeholder="$0.00" value={form.monto} onChange={e => setForm(f => ({ ...f, monto: e.target.value }))} required />
+                  <button
+                    type="button"
+                    className="shrink-0 px-3 rounded-xl text-xs font-bold transition-all"
+                    style={{ background: 'rgba(85,189,251,0.12)', color: 'var(--primary)', border: '1px solid rgba(85,189,251,0.3)', whiteSpace: 'nowrap' }}
+                    onClick={() => setForm(f => ({ ...f, monto: String(saldos[f.origen]) }))}
+                    disabled={saldos[form.origen] <= 0}
+                  >
+                    Mover todo
+                  </button>
+                </div>
+                <p className="text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>
+                  Disponible en {form.origen}: <span className="text-white font-semibold">${saldos[form.origen].toFixed(2)}</span>
                 </p>
               </div>
               <div>

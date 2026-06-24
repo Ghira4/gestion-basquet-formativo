@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Gasto, Evento, CategoriaGasto, TipoCaja } from '@/types'
-import { TrendingDown, Plus, X, Filter } from 'lucide-react'
+import { TrendingDown, Plus, X, Package } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -19,8 +19,12 @@ const EMPTY_FORM = {
   evento_id: '',
 }
 
+type Tab = 'manual' | 'buffet'
+
 export default function GastosPage() {
+  const [tab, setTab] = useState<Tab>('buffet')
   const [gastos, setGastos] = useState<(Gasto & { eventos: { nombre: string } | null })[]>([])
+  const [ventaItems, setVentaItems] = useState<any[]>([])
   const [eventos, setEventos] = useState<Evento[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -33,12 +37,16 @@ export default function GastosPage() {
   const supabase = createClient()
 
   async function fetchData() {
-    const [{ data: g }, { data: ev }] = await Promise.all([
+    const [{ data: g }, { data: ev }, { data: vi }] = await Promise.all([
       supabase.from('gastos').select('*, eventos(nombre)').order('fecha', { ascending: false }).order('created_at', { ascending: false }),
       supabase.from('eventos').select('*').order('created_at', { ascending: false }),
+      supabase.from('venta_items')
+        .select('*, productos(nombre, categoria), ventas!inner(evento_id, cancelada, eventos(nombre))')
+        .eq('ventas.cancelada', false),
     ])
     setGastos((g as any) || [])
     setEventos((ev as any) || [])
+    setVentaItems(vi || [])
     setLoading(false)
   }
 
@@ -63,13 +71,34 @@ export default function GastosPage() {
     fetchData()
   }
 
-  const filtrados = gastos.filter(g => {
+  // Items del buffet filtrados
+  const itemsFiltrados = ventaItems.filter((vi: any) =>
+    filtroEvento === 'TODOS' || vi.ventas?.evento_id === filtroEvento
+  )
+
+  // Agrupar por producto para el tab buffet
+  const costosPorProducto: Record<string, { nombre: string; categoria: string; cantidad: number; costo: number; ingreso: number }> = {}
+  itemsFiltrados.forEach((vi: any) => {
+    const nombre = vi.productos?.nombre || 'Desconocido'
+    if (!costosPorProducto[nombre]) {
+      costosPorProducto[nombre] = { nombre, categoria: vi.productos?.categoria || '', cantidad: 0, costo: 0, ingreso: 0 }
+    }
+    costosPorProducto[nombre].cantidad += vi.cantidad
+    costosPorProducto[nombre].costo += vi.costo_unitario * vi.cantidad
+    costosPorProducto[nombre].ingreso += vi.precio_unitario * vi.cantidad
+  })
+  const productosBuffet = Object.values(costosPorProducto).sort((a, b) => b.costo - a.costo)
+  const totalCostoBuffet = productosBuffet.reduce((a, p) => a + p.costo, 0)
+  const totalIngresoBuffet = productosBuffet.reduce((a, p) => a + p.ingreso, 0)
+  const gananciaBuffet = totalIngresoBuffet - totalCostoBuffet
+
+  // Gastos manuales filtrados
+  const gastosFiltrados = gastos.filter(g => {
     const matchCat = filtroCat === 'TODAS' || g.categoria === filtroCat
     const matchEv = filtroEvento === 'TODOS' || (filtroEvento === 'SIN_EVENTO' ? !g.evento_id : g.evento_id === filtroEvento)
     return matchCat && matchEv
   })
-
-  const totalFiltrado = filtrados.reduce((a, g) => a + g.monto, 0)
+  const totalManual = gastosFiltrados.reduce((a, g) => a + g.monto, 0)
 
   const BADGE_CAT: Record<CategoriaGasto, string> = {
     MERCADERIA: 'badge-blue',
@@ -84,7 +113,8 @@ export default function GastosPage() {
         <div>
           <h1 className="text-2xl font-bold text-white">Gastos</h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            {filtrados.length} registros · Total: <span className="font-bold" style={{ color: '#f87171' }}>${totalFiltrado.toFixed(2)}</span>
+            Costo buffet: <span className="font-bold" style={{ color: '#f87171' }}>${totalCostoBuffet.toFixed(2)}</span>
+            {totalManual > 0 && <> · Otros: <span className="font-bold" style={{ color: '#f87171' }}>${totalManual.toFixed(2)}</span></>}
           </p>
         </div>
         <button className="btn-primary" onClick={() => setShowModal(true)}>
@@ -92,31 +122,26 @@ export default function GastosPage() {
         </button>
       </div>
 
-      {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-5">
-        <div className="flex gap-2 flex-wrap">
-          {(['TODAS', ...CATEGORIAS] as const).map(cat => (
+      {/* Tabs + filtro evento */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+        <div className="flex gap-1 p-1 rounded-xl" style={{ background: 'rgba(85,189,251,0.06)', border: '1px solid var(--glass-border)' }}>
+          {([['buffet', 'Buffet (costo mercadería)'], ['manual', 'Otros gastos']] as const).map(([t, label]) => (
             <button
-              key={cat}
-              onClick={() => setFiltroCat(cat)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+              key={t}
+              onClick={() => setTab(t)}
+              className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
               style={{
-                background: filtroCat === cat ? 'var(--primary)' : 'rgba(85,189,251,0.08)',
-                color: filtroCat === cat ? 'var(--dark)' : 'var(--text-muted)',
-                border: `1px solid ${filtroCat === cat ? 'var(--primary)' : 'var(--glass-border)'}`,
+                background: tab === t ? 'var(--primary)' : 'transparent',
+                color: tab === t ? 'var(--dark)' : 'var(--text-muted)',
               }}
             >
-              {cat}
+              {label}
             </button>
           ))}
         </div>
-        <select
-          className="select-glass sm:w-52"
-          value={filtroEvento}
-          onChange={e => setFiltroEvento(e.target.value)}
-        >
+        <select className="select-glass sm:w-56 ml-auto" value={filtroEvento} onChange={e => setFiltroEvento(e.target.value)}>
           <option value="TODOS">Todos los eventos</option>
-          <option value="SIN_EVENTO">Sin evento</option>
+          {tab === 'manual' && <option value="SIN_EVENTO">Sin evento</option>}
           {eventos.map(ev => <option key={ev.id} value={ev.id}>{ev.nombre}</option>)}
         </select>
       </div>
@@ -125,46 +150,104 @@ export default function GastosPage() {
         <div className="flex items-center justify-center py-20">
           <span className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin" style={{ color: 'var(--primary)' }} />
         </div>
-      ) : filtrados.length === 0 ? (
-        <div className="glass-card p-12 text-center">
-          <TrendingDown size={40} className="mx-auto mb-3 opacity-30" style={{ color: '#f87171' }} />
-          <p className="font-medium text-white">Sin gastos registrados</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Registrá un gasto para llevar el control.</p>
-        </div>
-      ) : (
-        <div className="glass-card overflow-hidden">
-          <table className="table-glass">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Categoría</th>
-                <th>Descripción</th>
-                <th>Evento</th>
-                <th>Caja</th>
-                <th>Monto</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtrados.map(g => (
-                <tr key={g.id}>
-                  <td className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {format(new Date(g.fecha + 'T00:00:00'), "d MMM yyyy", { locale: es })}
-                  </td>
-                  <td><span className={`badge ${BADGE_CAT[g.categoria]}`}>{g.categoria}</span></td>
-                  <td className="font-medium text-white">{g.descripcion}</td>
-                  <td className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {(g as any).eventos?.nombre || '—'}
-                  </td>
-                  <td><span className="badge badge-blue">{g.caja}</span></td>
-                  <td className="font-bold" style={{ color: '#f87171' }}>-${g.monto.toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="px-4 py-3 flex justify-end" style={{ borderTop: '1px solid var(--border)' }}>
-            <span className="text-sm font-bold" style={{ color: '#f87171' }}>Total: -${totalFiltrado.toFixed(2)}</span>
+      ) : tab === 'buffet' ? (
+        <>
+          {/* Resumen buffet */}
+          <div className="grid grid-cols-3 gap-4 mb-5">
+            <div className="stat-card">
+              <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Costo total mercadería</p>
+              <p className="text-2xl font-bold" style={{ color: '#f87171' }}>${totalCostoBuffet.toFixed(2)}</p>
+            </div>
+            <div className="stat-card">
+              <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Total vendido</p>
+              <p className="text-2xl font-bold" style={{ color: 'var(--primary)' }}>${totalIngresoBuffet.toFixed(2)}</p>
+            </div>
+            <div className="stat-card">
+              <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Ganancia en productos</p>
+              <p className="text-2xl font-bold" style={{ color: gananciaBuffet >= 0 ? '#4ade80' : '#f87171' }}>${gananciaBuffet.toFixed(2)}</p>
+            </div>
           </div>
-        </div>
+
+          {productosBuffet.length === 0 ? (
+            <div className="glass-card p-12 text-center">
+              <Package size={40} className="mx-auto mb-3 opacity-30" style={{ color: '#f87171' }} />
+              <p className="font-medium text-white">Sin datos de buffet</p>
+              <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Los costos de productos vendidos aparecen acá automáticamente.</p>
+            </div>
+          ) : (
+            <div className="glass-card overflow-hidden">
+              <table className="table-glass">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Unidades vendidas</th>
+                    <th>Costo total</th>
+                    <th>Ingreso total</th>
+                    <th>Ganancia</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productosBuffet.map(p => (
+                    <tr key={p.nombre}>
+                      <td className="font-semibold text-white">{p.nombre}</td>
+                      <td><span className="badge badge-blue">{p.categoria}</span></td>
+                      <td>{p.cantidad} u.</td>
+                      <td style={{ color: '#f87171' }}>-${p.costo.toFixed(2)}</td>
+                      <td style={{ color: 'var(--primary)' }}>+${p.ingreso.toFixed(2)}</td>
+                      <td className="font-bold" style={{ color: p.ingreso - p.costo >= 0 ? '#4ade80' : '#f87171' }}>
+                        ${(p.ingreso - p.costo).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="px-4 py-3 flex justify-between" style={{ borderTop: '1px solid var(--border)' }}>
+                <span className="text-sm font-bold" style={{ color: '#f87171' }}>Costo total: -${totalCostoBuffet.toFixed(2)}</span>
+                <span className="text-sm font-bold" style={{ color: gananciaBuffet >= 0 ? '#4ade80' : '#f87171' }}>Ganancia: ${gananciaBuffet.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="flex gap-2 flex-wrap mb-4">
+            {(['TODAS', ...CATEGORIAS] as const).map(cat => (
+              <button key={cat} onClick={() => setFiltroCat(cat)} className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                style={{ background: filtroCat === cat ? 'var(--primary)' : 'rgba(85,189,251,0.08)', color: filtroCat === cat ? 'var(--dark)' : 'var(--text-muted)', border: `1px solid ${filtroCat === cat ? 'var(--primary)' : 'var(--glass-border)'}` }}>
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {gastosFiltrados.length === 0 ? (
+            <div className="glass-card p-12 text-center">
+              <TrendingDown size={40} className="mx-auto mb-3 opacity-30" style={{ color: '#f87171' }} />
+              <p className="font-medium text-white">Sin gastos registrados</p>
+            </div>
+          ) : (
+            <div className="glass-card overflow-hidden">
+              <table className="table-glass">
+                <thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Evento</th><th>Caja</th><th>Monto</th></tr></thead>
+                <tbody>
+                  {gastosFiltrados.map(g => (
+                    <tr key={g.id}>
+                      <td className="text-xs" style={{ color: 'var(--text-muted)' }}>{format(new Date(g.fecha + 'T00:00:00'), "d MMM yyyy", { locale: es })}</td>
+                      <td><span className={`badge ${BADGE_CAT[g.categoria]}`}>{g.categoria}</span></td>
+                      <td className="font-medium text-white">{g.descripcion}</td>
+                      <td className="text-xs" style={{ color: 'var(--text-muted)' }}>{(g as any).eventos?.nombre || '—'}</td>
+                      <td><span className="badge badge-blue">{g.caja}</span></td>
+                      <td className="font-bold" style={{ color: '#f87171' }}>-${g.monto.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="px-4 py-3 flex justify-end" style={{ borderTop: '1px solid var(--border)' }}>
+                <span className="text-sm font-bold" style={{ color: '#f87171' }}>Total: -${totalManual.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Modal */}

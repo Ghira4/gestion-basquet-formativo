@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Ingreso, Evento, CategoriaIngreso, TipoCaja } from '@/types'
-import { TrendingUp, Plus, X } from 'lucide-react'
+import { TrendingUp, Plus, X, ShoppingBag } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -19,26 +19,32 @@ const EMPTY_FORM = {
   evento_id: '',
 }
 
+type Tab = 'manual' | 'buffet'
+
 export default function IngresosPage() {
+  const [tab, setTab] = useState<Tab>('buffet')
   const [ingresos, setIngresos] = useState<(Ingreso & { eventos: { nombre: string } | null })[]>([])
+  const [ventas, setVentas] = useState<any[]>([])
   const [eventos, setEventos] = useState<Evento[]>([])
+  const [filtroEvento, setFiltroEvento] = useState<string>('TODOS')
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [filtroCat, setFiltroCat] = useState<CategoriaIngreso | 'TODAS'>('TODAS')
-  const [filtroEvento, setFiltroEvento] = useState<string>('TODOS')
 
   const supabase = createClient()
 
   async function fetchData() {
-    const [{ data: ing }, { data: ev }] = await Promise.all([
+    const [{ data: ing }, { data: ev }, { data: v }] = await Promise.all([
       supabase.from('ingresos').select('*, eventos(nombre)').order('fecha', { ascending: false }).order('created_at', { ascending: false }),
       supabase.from('eventos').select('*').order('created_at', { ascending: false }),
+      supabase.from('ventas').select('*, eventos(nombre), venta_items(cantidad, precio_unitario, productos(nombre))').eq('cancelada', false).order('created_at', { ascending: false }),
     ])
     setIngresos((ing as any) || [])
     setEventos((ev as any) || [])
+    setVentas(v || [])
     setLoading(false)
   }
 
@@ -63,13 +69,21 @@ export default function IngresosPage() {
     fetchData()
   }
 
-  const filtrados = ingresos.filter(i => {
+  // Ventas filtradas por evento
+  const ventasFiltradas = ventas.filter(v =>
+    filtroEvento === 'TODOS' || v.evento_id === filtroEvento
+  )
+  const totalBuffet = ventasFiltradas.reduce((a: number, v: any) => a + v.total, 0)
+  const totalEfectivoBuffet = ventasFiltradas.reduce((a: number, v: any) => a + v.monto_efectivo, 0)
+  const totalTransfBuffet = ventasFiltradas.reduce((a: number, v: any) => a + v.monto_transferencia, 0)
+
+  // Ingresos manuales filtrados
+  const ingresosFiltrados = ingresos.filter(i => {
     const matchCat = filtroCat === 'TODAS' || i.categoria === filtroCat
     const matchEv = filtroEvento === 'TODOS' || (filtroEvento === 'SIN_EVENTO' ? !i.evento_id : i.evento_id === filtroEvento)
     return matchCat && matchEv
   })
-
-  const totalFiltrado = filtrados.reduce((a, i) => a + i.monto, 0)
+  const totalManual = ingresosFiltrados.reduce((a, i) => a + i.monto, 0)
 
   const BADGE_CAT: Record<CategoriaIngreso, string> = {
     PUBLICIDAD: 'badge-blue',
@@ -84,7 +98,8 @@ export default function IngresosPage() {
         <div>
           <h1 className="text-2xl font-bold text-white">Ingresos</h1>
           <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            {filtrados.length} registros · Total: <span className="font-bold" style={{ color: '#4ade80' }}>${totalFiltrado.toFixed(2)}</span>
+            Buffet: <span className="font-bold" style={{ color: '#4ade80' }}>${totalBuffet.toFixed(2)}</span>
+            {totalManual > 0 && <> · Otros: <span className="font-bold" style={{ color: '#4ade80' }}>${totalManual.toFixed(2)}</span></>}
           </p>
         </div>
         <button className="btn-primary" onClick={() => setShowModal(true)}>
@@ -92,27 +107,27 @@ export default function IngresosPage() {
         </button>
       </div>
 
-      {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-5">
-        <div className="flex gap-2 flex-wrap">
-          {(['TODAS', ...CATEGORIAS] as const).map(cat => (
+      {/* Tabs + filtro evento */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+        <div className="flex gap-1 p-1 rounded-xl" style={{ background: 'rgba(85,189,251,0.06)', border: '1px solid var(--glass-border)' }}>
+          {([['buffet', 'Buffet'], ['manual', 'Otros ingresos']] as const).map(([t, label]) => (
             <button
-              key={cat}
-              onClick={() => setFiltroCat(cat)}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+              key={t}
+              onClick={() => setTab(t)}
+              className="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
               style={{
-                background: filtroCat === cat ? 'var(--primary)' : 'rgba(85,189,251,0.08)',
-                color: filtroCat === cat ? 'var(--dark)' : 'var(--text-muted)',
-                border: `1px solid ${filtroCat === cat ? 'var(--primary)' : 'var(--glass-border)'}`,
+                background: tab === t ? 'var(--primary)' : 'transparent',
+                color: tab === t ? 'var(--dark)' : 'var(--text-muted)',
               }}
             >
-              {cat}
+              {label}
             </button>
           ))}
         </div>
-        <select className="select-glass sm:w-52" value={filtroEvento} onChange={e => setFiltroEvento(e.target.value)}>
+
+        <select className="select-glass sm:w-56 ml-auto" value={filtroEvento} onChange={e => setFiltroEvento(e.target.value)}>
           <option value="TODOS">Todos los eventos</option>
-          <option value="SIN_EVENTO">Sin evento</option>
+          {tab === 'manual' && <option value="SIN_EVENTO">Sin evento</option>}
           {eventos.map(ev => <option key={ev.id} value={ev.id}>{ev.nombre}</option>)}
         </select>
       </div>
@@ -121,44 +136,108 @@ export default function IngresosPage() {
         <div className="flex items-center justify-center py-20">
           <span className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin" style={{ color: 'var(--primary)' }} />
         </div>
-      ) : filtrados.length === 0 ? (
-        <div className="glass-card p-12 text-center">
-          <TrendingUp size={40} className="mx-auto mb-3 opacity-30" style={{ color: '#4ade80' }} />
-          <p className="font-medium text-white">Sin ingresos registrados</p>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Registrá un ingreso para llevar el control.</p>
-        </div>
-      ) : (
-        <div className="glass-card overflow-hidden">
-          <table className="table-glass">
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Categoría</th>
-                <th>Descripción</th>
-                <th>Evento</th>
-                <th>Caja</th>
-                <th>Monto</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtrados.map(i => (
-                <tr key={i.id}>
-                  <td className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {format(new Date(i.fecha + 'T00:00:00'), "d MMM yyyy", { locale: es })}
-                  </td>
-                  <td><span className={`badge ${BADGE_CAT[i.categoria]}`}>{i.categoria}</span></td>
-                  <td className="font-medium text-white">{i.descripcion}</td>
-                  <td className="text-xs" style={{ color: 'var(--text-muted)' }}>{(i as any).eventos?.nombre || '—'}</td>
-                  <td><span className="badge badge-blue">{i.caja}</span></td>
-                  <td className="font-bold" style={{ color: '#4ade80' }}>+${i.monto.toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="px-4 py-3 flex justify-end" style={{ borderTop: '1px solid var(--border)' }}>
-            <span className="text-sm font-bold" style={{ color: '#4ade80' }}>Total: +${totalFiltrado.toFixed(2)}</span>
+      ) : tab === 'buffet' ? (
+        <>
+          {/* Resumen buffet */}
+          <div className="grid grid-cols-3 gap-4 mb-5">
+            <div className="stat-card">
+              <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Total recaudado</p>
+              <p className="text-2xl font-bold" style={{ color: '#4ade80' }}>${totalBuffet.toFixed(2)}</p>
+            </div>
+            <div className="stat-card">
+              <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>En efectivo</p>
+              <p className="text-2xl font-bold text-white">${totalEfectivoBuffet.toFixed(2)}</p>
+            </div>
+            <div className="stat-card">
+              <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Por transferencia</p>
+              <p className="text-2xl font-bold" style={{ color: 'var(--primary)' }}>${totalTransfBuffet.toFixed(2)}</p>
+            </div>
           </div>
-        </div>
+
+          {ventasFiltradas.length === 0 ? (
+            <div className="glass-card p-12 text-center">
+              <ShoppingBag size={40} className="mx-auto mb-3 opacity-30" style={{ color: '#4ade80' }} />
+              <p className="font-medium text-white">Sin ventas de buffet</p>
+              <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Las ventas registradas en eventos aparecen acá automáticamente.</p>
+            </div>
+          ) : (
+            <div className="glass-card overflow-hidden">
+              <table className="table-glass">
+                <thead>
+                  <tr>
+                    <th>Fecha y hora</th>
+                    <th>Evento</th>
+                    <th>Items</th>
+                    <th>Efectivo</th>
+                    <th>Transferencia</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ventasFiltradas.map((v: any) => (
+                    <tr key={v.id}>
+                      <td className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {format(new Date(v.created_at), "d MMM HH:mm", { locale: es })}
+                      </td>
+                      <td className="text-xs" style={{ color: 'var(--text-muted)' }}>{v.eventos?.nombre || '—'}</td>
+                      <td className="text-xs" style={{ color: 'var(--text-muted)', maxWidth: 200 }}>
+                        <span className="line-clamp-1">
+                          {v.venta_items?.map((i: any) => `${i.cantidad}× ${i.productos?.nombre}`).join(', ')}
+                        </span>
+                      </td>
+                      <td style={{ color: 'var(--text-muted)' }}>${v.monto_efectivo.toFixed(2)}</td>
+                      <td style={{ color: 'var(--text-muted)' }}>${v.monto_transferencia.toFixed(2)}</td>
+                      <td className="font-bold" style={{ color: '#4ade80' }}>+${v.total.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="px-4 py-3 flex justify-end" style={{ borderTop: '1px solid var(--border)' }}>
+                <span className="text-sm font-bold" style={{ color: '#4ade80' }}>Total buffet: +${totalBuffet.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Filtro categoría */}
+          <div className="flex gap-2 flex-wrap mb-4">
+            {(['TODAS', ...CATEGORIAS] as const).map(cat => (
+              <button key={cat} onClick={() => setFiltroCat(cat)} className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                style={{ background: filtroCat === cat ? 'var(--primary)' : 'rgba(85,189,251,0.08)', color: filtroCat === cat ? 'var(--dark)' : 'var(--text-muted)', border: `1px solid ${filtroCat === cat ? 'var(--primary)' : 'var(--glass-border)'}` }}>
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {ingresosFiltrados.length === 0 ? (
+            <div className="glass-card p-12 text-center">
+              <TrendingUp size={40} className="mx-auto mb-3 opacity-30" style={{ color: '#4ade80' }} />
+              <p className="font-medium text-white">Sin ingresos registrados</p>
+            </div>
+          ) : (
+            <div className="glass-card overflow-hidden">
+              <table className="table-glass">
+                <thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Evento</th><th>Caja</th><th>Monto</th></tr></thead>
+                <tbody>
+                  {ingresosFiltrados.map(i => (
+                    <tr key={i.id}>
+                      <td className="text-xs" style={{ color: 'var(--text-muted)' }}>{format(new Date(i.fecha + 'T00:00:00'), "d MMM yyyy", { locale: es })}</td>
+                      <td><span className={`badge ${BADGE_CAT[i.categoria]}`}>{i.categoria}</span></td>
+                      <td className="font-medium text-white">{i.descripcion}</td>
+                      <td className="text-xs" style={{ color: 'var(--text-muted)' }}>{(i as any).eventos?.nombre || '—'}</td>
+                      <td><span className="badge badge-blue">{i.caja}</span></td>
+                      <td className="font-bold" style={{ color: '#4ade80' }}>+${i.monto.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="px-4 py-3 flex justify-end" style={{ borderTop: '1px solid var(--border)' }}>
+                <span className="text-sm font-bold" style={{ color: '#4ade80' }}>Total: +${totalManual.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Modal */}
