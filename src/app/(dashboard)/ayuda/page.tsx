@@ -557,23 +557,30 @@ export default function AyudaPage() {
 
   return (
     <div className="animate-fade-in">
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-start justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text)' }}>Manual de usuario</h1>
-          <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            Seleccioná un módulo para ver cómo usarlo
+          <h1 className="text-3xl font-bold mb-1" style={{ color: 'var(--text)' }}>Manual de usuario</h1>
+          <p className="text-base" style={{ color: 'var(--text-muted)' }}>
+            Tocá un módulo del índice para ver cómo usarlo paso a paso.
           </p>
         </div>
-        <button onClick={descargarPDF} disabled={generando} className="btn-primary">
-          {generando ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> : <Download size={16} />}
+        <button onClick={descargarPDF} disabled={generando} className="btn-primary shrink-0">
+          {generando
+            ? <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            : <Download size={16} />}
           {generando ? 'Generando...' : 'Descargar PDF'}
         </button>
       </div>
 
-      <div className="flex gap-5 flex-col lg:flex-row">
-        {/* Índice lateral */}
-        <div className="lg:w-56 shrink-0 flex flex-col gap-1.5">
+      <div className="flex gap-6 flex-col lg:flex-row items-start">
+
+        {/* ── Índice lateral ─────────────────────────────── */}
+        <div className="lg:w-64 shrink-0 glass-card p-3 flex flex-col gap-1">
+          <p className="text-xs font-bold px-3 py-2" style={{ color: 'var(--text-muted)', letterSpacing: '0.08em' }}>
+            MÓDULOS
+          </p>
           {MODULOS.map(m => {
             const Icon = m.icon
             const sel = activo === m.id
@@ -581,70 +588,88 @@ export default function AyudaPage() {
               <button
                 key={m.id}
                 onClick={() => setActivo(m.id)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all"
+                className="flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all w-full"
                 style={{
-                  background: sel ? `${m.color}18` : 'rgba(85,189,251,0.04)',
-                  border: `1px solid ${sel ? m.color + '55' : 'var(--glass-border)'}`,
+                  background: sel ? `${m.color}18` : 'transparent',
+                  borderLeft: `3px solid ${sel ? m.color : 'transparent'}`,
                   color: sel ? m.color : 'var(--text-muted)',
                 }}
               >
-                <Icon size={15} className="shrink-0" style={{ color: sel ? m.color : 'var(--text-muted)' }} />
-                <span className="text-sm font-medium leading-tight">{m.titulo.split(' — ')[0]}</span>
-                {sel && <ChevronRight size={13} className="ml-auto shrink-0" />}
+                <Icon size={16} className="shrink-0" />
+                <span className="text-sm font-semibold">{m.titulo.split(' — ')[0]}</span>
+                {sel && <ChevronRight size={14} className="ml-auto shrink-0 opacity-60" />}
               </button>
             )
           })}
         </div>
 
-        {/* Contenido del módulo */}
+        {/* ── Contenido del módulo ───────────────────────── */}
         {moduloActivo && (
-          <div className="flex-1 min-w-0 animate-fade-in" key={moduloActivo.id}>
-            {/* Título */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 rounded-xl" style={{ background: `${moduloActivo.color}18`, color: moduloActivo.color }}>
-                <moduloActivo.icon size={20} />
+          <div className="flex-1 min-w-0 flex flex-col gap-5 animate-fade-in" key={moduloActivo.id}>
+
+            {/* Cabecera del módulo */}
+            <div
+              className="rounded-2xl p-5 flex items-center gap-4"
+              style={{ background: `${moduloActivo.color}12`, border: `1px solid ${moduloActivo.color}33` }}
+            >
+              <div className="p-3 rounded-2xl shrink-0" style={{ background: `${moduloActivo.color}22`, color: moduloActivo.color }}>
+                <moduloActivo.icon size={24} />
               </div>
               <div>
-                <h2 className="text-lg font-bold" style={{ color: 'var(--text)' }}>{moduloActivo.titulo}</h2>
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{moduloActivo.resumen}</p>
+                <h2 className="text-xl font-bold mb-0.5" style={{ color: 'var(--text)' }}>
+                  {moduloActivo.titulo}
+                </h2>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                  {moduloActivo.resumen}
+                </p>
               </div>
             </div>
 
             {/* Ilustración */}
             {moduloActivo.ilustracion && (
-              <div className="glass-card p-3 mb-4" style={{ background: 'rgba(12,35,55,0.7)' }}>
-                <p className="text-xs mb-2 font-semibold" style={{ color: 'var(--text-muted)' }}>
-                  Vista de la pantalla
-                </p>
-                {moduloActivo.ilustracion}
+              <div className="glass-card overflow-hidden">
+                <div className="px-5 pt-4 pb-2 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ background: moduloActivo.color }} />
+                  <p className="text-xs font-bold" style={{ color: 'var(--text-muted)', letterSpacing: '0.07em' }}>
+                    ASÍ SE VE EN PANTALLA
+                  </p>
+                </div>
+                <div className="px-4 pb-4">
+                  {moduloActivo.ilustracion}
+                </div>
               </div>
             )}
 
             {/* Pasos */}
-            <div className="glass-card p-5">
-              <p className="text-xs font-semibold mb-4" style={{ color: 'var(--text-muted)' }}>
-                CÓMO USARLO
-              </p>
-              <div className="flex flex-col gap-4">
+            <div className="glass-card p-6">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-2 h-2 rounded-full" style={{ background: moduloActivo.color }} />
+                <p className="text-xs font-bold" style={{ color: 'var(--text-muted)', letterSpacing: '0.07em' }}>
+                  CÓMO USARLO
+                </p>
+              </div>
+              <div className="flex flex-col gap-5">
                 {moduloActivo.pasos.map((p, i) => (
-                  <div key={i} className="flex gap-4">
+                  <div key={i} className="flex gap-4 items-start">
                     <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold mt-0.5"
+                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-bold"
                       style={{
-                        background: p.n === '!' ? 'rgba(250,204,21,0.15)' : `${moduloActivo.color}18`,
+                        background: p.n === '!' ? 'rgba(250,204,21,0.12)' : `${moduloActivo.color}18`,
                         color: p.n === '!' ? '#facc15' : moduloActivo.color,
-                        border: `1px solid ${p.n === '!' ? 'rgba(250,204,21,0.3)' : moduloActivo.color + '44'}`,
+                        border: `1.5px solid ${p.n === '!' ? 'rgba(250,204,21,0.35)' : moduloActivo.color + '50'}`,
+                        minWidth: 32,
                       }}
                     >
                       {p.n === '!' ? '!' : p.n}
                     </div>
-                    <p className="text-sm leading-relaxed flex-1" style={{ color: 'var(--text-muted)', paddingTop: 3 }}>
+                    <p className="text-base leading-relaxed flex-1 pt-1" style={{ color: 'var(--text)' }}>
                       {p.texto}
                     </p>
                   </div>
                 ))}
               </div>
             </div>
+
           </div>
         )}
       </div>
