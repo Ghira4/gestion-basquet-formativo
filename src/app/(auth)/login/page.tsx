@@ -23,25 +23,15 @@ export default function LoginPage() {
 
     const supabase = createClient()
 
-    const { data: user, error: userError } = await supabase
-      .from('usuarios')
-      .select('email_auth')
-      .eq('dni', dni)
-      .single()
-
-    if (userError || !user) {
-      setError('DNI no encontrado.')
-      setLoading(false)
-      return
-    }
+    const emailAuth = `${dni}@sccbasquet.internal`
 
     const { error: authError } = await supabase.auth.signInWithPassword({
-      email: user.email_auth,
+      email: emailAuth,
       password,
     })
 
     if (authError) {
-      setError('Contraseña incorrecta.')
+      setError('DNI o contraseña incorrectos.')
       setLoading(false)
       return
     }
