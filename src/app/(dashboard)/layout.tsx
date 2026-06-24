@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import Sidebar from '@/components/layout/Sidebar'
+import SidebarWrapper from '@/components/layout/SidebarWrapper'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -16,13 +16,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="flex h-screen bg-main overflow-hidden">
-      <Sidebar usuario={usuario} />
+      <SidebarWrapper usuario={usuario} />
       <main
-        className="flex-1 overflow-y-auto transition-all duration-300"
-        style={{ marginLeft: '240px' }}
-        id="main-content"
+        className="flex-1 overflow-y-auto"
+        style={{
+          paddingLeft: 'var(--sidebar-w, 240px)',
+          transition: 'padding-left 0.3s cubic-bezier(0.4,0,0.2,1)',
+        }}
       >
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-6 lg:p-8 max-w-7xl mx-auto w-full">
           {children}
         </div>
       </main>

@@ -14,6 +14,7 @@
   --glass-bg: rgba(12, 35, 55, 0.6);
   --glass-border: rgba(85, 189, 251, 0.25);
   --glass-shine: rgba(255, 255, 255, 0.08);
+  --sidebar-w: 240px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -201,11 +202,17 @@ html, body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(4px);
-  z-index: 50;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.modal-overlay > * {
+  margin: auto;
 }

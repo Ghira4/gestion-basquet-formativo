@@ -23,10 +23,11 @@ const navItems = [
 
 interface SidebarProps {
   usuario: { nombre: string; apellido: string; dni: string } | null
+  expanded: boolean
+  setExpanded: (v: boolean) => void
 }
 
-export default function Sidebar({ usuario }: SidebarProps) {
-  const [expanded, setExpanded] = useState(true)
+export function SidebarInner({ usuario, expanded, setExpanded }: SidebarProps) {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
@@ -39,53 +40,44 @@ export default function Sidebar({ usuario }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile toggle */}
-      <button
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 glass-sm"
-        onClick={() => setExpanded(!expanded)}
-      >
-        <Menu size={20} style={{ color: 'var(--primary)' }} />
-      </button>
-
-      {/* Overlay mobile */}
-      {expanded && (
-        <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setExpanded(false)} />
-      )}
-
       {/* Sidebar */}
       <aside
-        className="fixed left-0 top-0 h-full z-40 flex flex-col sidebar"
+        className="flex flex-col h-full sidebar"
         style={{
-          width: expanded ? '240px' : '64px',
-          background: 'linear-gradient(180deg, rgba(17,45,69,0.98) 0%, rgba(12,35,55,0.98) 100%)',
+          width: expanded ? '240px' : '68px',
+          background: 'linear-gradient(180deg, rgba(14,38,60,0.99) 0%, rgba(10,28,46,0.99) 100%)',
           borderRight: '1px solid var(--glass-border)',
-          backdropFilter: 'blur(20px)',
+          backdropFilter: 'blur(24px)',
+          flexShrink: 0,
         }}
       >
-        {/* Header */}
-        <div className="flex items-center gap-3 p-4 pb-3" style={{ borderBottom: '1px solid var(--border)' }}>
-          <div className="relative shrink-0" style={{ width: 36, height: 36 }}>
-            <Image src="/logo.png" alt="SCC" fill className="object-contain" />
+        {/* Header logo */}
+        <div
+          className="flex items-center gap-3 px-4 py-5"
+          style={{ borderBottom: '1px solid rgba(85,189,251,0.12)' }}
+        >
+          <div className="relative shrink-0" style={{ width: 38, height: 38 }}>
+            <Image src="/logo.png" alt="SCC" fill className="object-contain drop-shadow-lg" />
           </div>
           {expanded && (
-            <div className="overflow-hidden">
-              <p className="text-xs font-bold text-white leading-tight whitespace-nowrap">SCC</p>
-              <p className="text-xs leading-tight whitespace-nowrap" style={{ color: 'var(--primary)', fontSize: '0.7rem' }}>
+            <div className="overflow-hidden flex-1">
+              <p className="text-sm font-bold text-white leading-tight whitespace-nowrap tracking-tight">SCC</p>
+              <p className="leading-tight whitespace-nowrap" style={{ color: 'var(--primary)', fontSize: '0.7rem', fontWeight: 500 }}>
                 Basquet Formativo
               </p>
             </div>
           )}
           <button
             onClick={() => setExpanded(!expanded)}
-            className="ml-auto shrink-0 p-1 rounded-lg transition-colors hover:bg-white/5 hidden lg:block"
-            style={{ color: 'var(--text-muted)' }}
+            className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/8"
+            style={{ color: 'var(--text-muted)', marginLeft: expanded ? 'auto' : undefined }}
           >
-            {expanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+            {expanded ? <ChevronLeft size={15} /> : <ChevronRight size={15} />}
           </button>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2">
+        {/* Nav items */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-1">
           {navItems.map(({ href, label, icon: Icon }) => {
             const active = pathname.startsWith(href)
             return (
@@ -93,54 +85,87 @@ export default function Sidebar({ usuario }: SidebarProps) {
                 key={href}
                 href={href}
                 onClick={() => window.innerWidth < 1024 && setExpanded(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-all group"
+                className="flex items-center gap-3 rounded-xl transition-all group relative"
                 style={{
-                  background: active ? 'rgba(85,189,251,0.12)' : 'transparent',
+                  padding: expanded ? '10px 14px' : '10px 0',
+                  justifyContent: expanded ? 'flex-start' : 'center',
+                  background: active
+                    ? 'linear-gradient(135deg, rgba(85,189,251,0.15) 0%, rgba(85,189,251,0.08) 100%)'
+                    : 'transparent',
                   color: active ? 'var(--primary)' : 'var(--text-muted)',
-                  borderLeft: active ? '2px solid var(--primary)' : '2px solid transparent',
+                  borderLeft: active ? '2.5px solid var(--primary)' : '2.5px solid transparent',
+                  boxShadow: active ? '0 0 12px rgba(85,189,251,0.08)' : 'none',
                 }}
                 title={!expanded ? label : undefined}
               >
-                <Icon size={18} className="shrink-0" />
+                <Icon size={18} className="shrink-0" style={{ opacity: active ? 1 : 0.7 }} />
                 {expanded && (
-                  <span className="text-sm font-medium whitespace-nowrap">{label}</span>
+                  <span className="text-sm font-medium whitespace-nowrap" style={{ opacity: active ? 1 : 0.85 }}>
+                    {label}
+                  </span>
                 )}
               </Link>
             )
           })}
         </nav>
 
-        {/* Footer: usuario + logout */}
-        <div className="p-2" style={{ borderTop: '1px solid var(--border)' }}>
+        {/* Footer usuario + logout */}
+        <div className="px-3 pb-4 pt-3" style={{ borderTop: '1px solid rgba(85,189,251,0.1)' }}>
           {expanded && usuario && (
-            <div className="glass-sm px-3 py-2.5 mb-2">
-              <p className="text-xs font-semibold text-white leading-tight truncate">
-                {usuario.nombre} {usuario.apellido}
-              </p>
-              <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>
-                DNI {usuario.dni}
-              </p>
+            <div
+              className="flex items-center gap-3 rounded-xl px-3 py-3 mb-2"
+              style={{ background: 'rgba(85,189,251,0.06)', border: '1px solid rgba(85,189,251,0.12)' }}
+            >
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
+                style={{ background: 'rgba(85,189,251,0.2)', color: 'var(--primary)' }}
+              >
+                {usuario.nombre[0]}{usuario.apellido[0]}
+              </div>
+              <div className="overflow-hidden flex-1">
+                <p className="text-sm font-semibold text-white leading-tight truncate">
+                  {usuario.nombre} {usuario.apellido}
+                </p>
+                <p className="text-xs truncate mt-0.5" style={{ color: 'var(--text-muted)', fontSize: '0.68rem' }}>
+                  DNI {usuario.dni}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {!expanded && usuario && (
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center mx-auto mb-2 text-xs font-bold"
+              style={{ background: 'rgba(85,189,251,0.15)', color: 'var(--primary)' }}
+            >
+              {usuario.nombre[0]}{usuario.apellido[0]}
             </div>
           )}
 
           <button
             onClick={() => setShowLogoutConfirm(true)}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-all hover:bg-red-500/10"
-            style={{ color: '#f87171' }}
+            className="flex items-center gap-3 w-full rounded-xl transition-all"
+            style={{
+              padding: expanded ? '9px 12px' : '9px 0',
+              justifyContent: expanded ? 'flex-start' : 'center',
+              color: '#f87171',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             title={!expanded ? 'Cerrar sesión' : undefined}
           >
-            <LogOut size={18} className="shrink-0" />
+            <LogOut size={17} className="shrink-0" />
             {expanded && <span className="text-sm font-medium">Cerrar sesión</span>}
           </button>
         </div>
       </aside>
 
-      {/* Logout confirm modal */}
+      {/* Modal logout */}
       {showLogoutConfirm && (
         <div className="modal-overlay" onClick={() => setShowLogoutConfirm(false)}>
           <div className="glass-card p-6 w-full max-w-sm animate-fade-in" onClick={e => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-xl" style={{ background: 'rgba(239,68,68,0.15)' }}>
+              <div className="p-2.5 rounded-xl" style={{ background: 'rgba(239,68,68,0.12)' }}>
                 <LogOut size={20} style={{ color: '#f87171' }} />
               </div>
               <div>
@@ -155,6 +180,35 @@ export default function Sidebar({ usuario }: SidebarProps) {
           </div>
         </div>
       )}
+    </>
+  )
+}
+
+export default function Sidebar({ usuario }: { usuario: { nombre: string; apellido: string; dni: string } | null }) {
+  const [expanded, setExpanded] = useState(true)
+
+  return (
+    <>
+      {/* Mobile overlay */}
+      {expanded && (
+        <div className="lg:hidden fixed inset-0 bg-black/60 z-30" onClick={() => setExpanded(false)} />
+      )}
+
+      {/* Mobile toggle */}
+      <button
+        className="lg:hidden fixed top-4 left-4 z-50 p-2.5 glass-sm"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <Menu size={19} style={{ color: 'var(--primary)' }} />
+      </button>
+
+      {/* Fixed sidebar wrapper */}
+      <div
+        className="fixed left-0 top-0 h-full z-40 sidebar"
+        style={{ width: expanded ? '240px' : '68px' }}
+      >
+        <SidebarInner usuario={usuario} expanded={expanded} setExpanded={setExpanded} />
+      </div>
     </>
   )
 }
