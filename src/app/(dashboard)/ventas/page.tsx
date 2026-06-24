@@ -203,16 +203,16 @@ export default function VentasPage() {
           <p style={{ color: 'var(--text-muted)' }}>Seleccioná un evento para comenzar a vender.</p>
         </div>
       ) : (
-        <div className="flex flex-col lg:flex-row gap-5">
+        <div className="flex flex-col lg:flex-row gap-6" style={{ minHeight: 'calc(100vh - 180px)' }}>
           {/* Productos */}
           <div className="flex-1 min-w-0">
             {/* Filtro categorías */}
-            <div className="flex gap-2 flex-wrap mb-4">
+            <div className="flex gap-2 flex-wrap mb-5">
               {(['TODAS', ...CATEGORIAS] as const).map(cat => (
                 <button
                   key={cat}
                   onClick={() => setCategoriaFiltro(cat)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                  className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
                   style={{
                     background: categoriaFiltro === cat ? 'var(--primary)' : 'rgba(85,189,251,0.08)',
                     color: categoriaFiltro === cat ? 'var(--dark)' : 'var(--text-muted)',
@@ -224,7 +224,7 @@ export default function VentasPage() {
               ))}
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
               {productosFiltrados.map(p => {
                 const enCarrito = carrito.find(i => i.producto.id === p.id)
                 const sinStock = p.stock <= 0
@@ -233,20 +233,21 @@ export default function VentasPage() {
                     key={p.id}
                     onClick={() => !sinStock && agregarAlCarrito(p)}
                     disabled={sinStock}
-                    className="glass-card p-4 text-left transition-all"
+                    className="glass-card p-5 text-left transition-all"
                     style={{
                       opacity: sinStock ? 0.4 : 1,
                       cursor: sinStock ? 'not-allowed' : 'pointer',
                       borderColor: enCarrito ? 'var(--primary)' : undefined,
+                      boxShadow: enCarrito ? '0 0 0 1px var(--primary), 0 8px 32px rgba(85,189,251,0.15)' : undefined,
                     }}
                   >
-                    <p className="font-semibold text-white text-sm leading-tight mb-1">{p.nombre}</p>
-                    <p className="text-lg font-bold" style={{ color: 'var(--primary)' }}>${p.precio_venta.toFixed(2)}</p>
-                    <p className="text-xs mt-1" style={{ color: sinStock ? '#f87171' : 'var(--text-muted)' }}>
-                      {sinStock ? 'Sin stock' : `Stock: ${p.stock}`}
+                    <p className="font-semibold text-white text-base leading-tight mb-2">{p.nombre}</p>
+                    <p className="text-2xl font-bold mb-1" style={{ color: 'var(--primary)' }}>${p.precio_venta.toFixed(2)}</p>
+                    <p className="text-xs" style={{ color: sinStock ? '#f87171' : 'var(--text-muted)' }}>
+                      {sinStock ? 'Sin stock' : `${p.stock} disponibles`}
                     </p>
                     {enCarrito && (
-                      <div className="mt-2 px-2 py-0.5 rounded-full text-xs font-bold text-center" style={{ background: 'rgba(85,189,251,0.2)', color: 'var(--primary)' }}>
+                      <div className="mt-3 px-3 py-1 rounded-xl text-xs font-bold text-center" style={{ background: 'rgba(85,189,251,0.15)', color: 'var(--primary)' }}>
                         ×{enCarrito.cantidad} en carrito
                       </div>
                     )}
@@ -257,39 +258,42 @@ export default function VentasPage() {
           </div>
 
           {/* Carrito */}
-          <div className="lg:w-80 shrink-0">
-            <div className="glass-card p-4 sticky top-6">
-              <div className="flex items-center gap-2 mb-4">
-                <ShoppingCart size={18} style={{ color: 'var(--primary)' }} />
-                <h2 className="font-bold text-white">Carrito</h2>
+          <div className="lg:w-96 shrink-0">
+            <div className="glass-card p-5 sticky top-6 flex flex-col" style={{ minHeight: 320 }}>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="p-2 rounded-xl" style={{ background: 'rgba(85,189,251,0.12)', color: 'var(--primary)' }}>
+                  <ShoppingCart size={18} />
+                </div>
+                <h2 className="font-bold text-white text-lg">Carrito</h2>
                 {carrito.length > 0 && (
                   <span className="ml-auto badge badge-blue">{carrito.reduce((a, i) => a + i.cantidad, 0)} items</span>
                 )}
               </div>
 
               {carrito.length === 0 ? (
-                <p className="text-sm text-center py-8" style={{ color: 'var(--text-muted)' }}>
-                  Tocá un producto para agregarlo
-                </p>
+                <div className="flex-1 flex flex-col items-center justify-center py-12">
+                  <ShoppingCart size={36} className="mb-3 opacity-20" style={{ color: 'var(--primary)' }} />
+                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Tocá un producto para agregarlo</p>
+                </div>
               ) : (
                 <>
-                  <div className="flex flex-col gap-2 mb-4 max-h-72 overflow-y-auto">
+                  <div className="flex flex-col gap-2 mb-4 overflow-y-auto" style={{ maxHeight: 340 }}>
                     {carrito.map(item => (
-                      <div key={item.producto.id} className="glass-sm p-3 flex items-center gap-2">
+                      <div key={item.producto.id} className="glass-sm p-3.5 flex items-center gap-3">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-white truncate">{item.producto.nombre}</p>
-                          <p className="text-xs" style={{ color: 'var(--primary)' }}>${(item.producto.precio_venta * item.cantidad).toFixed(2)}</p>
+                          <p className="text-sm font-semibold text-white truncate">{item.producto.nombre}</p>
+                          <p className="text-sm font-bold mt-0.5" style={{ color: 'var(--primary)' }}>${(item.producto.precio_venta * item.cantidad).toFixed(2)}</p>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <button onClick={() => cambiarCantidad(item.producto.id, -1)} className="w-6 h-6 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10" style={{ color: 'var(--text-muted)' }}>
-                            <Minus size={12} />
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => cambiarCantidad(item.producto.id, -1)} className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10" style={{ color: 'var(--text-muted)', border: '1px solid var(--glass-border)' }}>
+                            <Minus size={13} />
                           </button>
-                          <span className="text-sm font-bold text-white w-5 text-center">{item.cantidad}</span>
-                          <button onClick={() => cambiarCantidad(item.producto.id, 1)} className="w-6 h-6 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10" style={{ color: 'var(--text-muted)' }}>
-                            <Plus size={12} />
+                          <span className="text-sm font-bold text-white w-6 text-center">{item.cantidad}</span>
+                          <button onClick={() => cambiarCantidad(item.producto.id, 1)} className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors hover:bg-white/10" style={{ color: 'var(--text-muted)', border: '1px solid var(--glass-border)' }}>
+                            <Plus size={13} />
                           </button>
-                          <button onClick={() => quitarDelCarrito(item.producto.id)} className="w-6 h-6 rounded-lg flex items-center justify-center ml-1 transition-colors hover:bg-red-500/10" style={{ color: '#f87171' }}>
-                            <Trash2 size={12} />
+                          <button onClick={() => quitarDelCarrito(item.producto.id)} className="w-7 h-7 rounded-lg flex items-center justify-center ml-1 transition-colors hover:bg-red-500/10" style={{ color: '#f87171' }}>
+                            <Trash2 size={13} />
                           </button>
                         </div>
                       </div>
@@ -297,17 +301,17 @@ export default function VentasPage() {
                   </div>
 
                   <div className="divider" />
-                  <div className="flex items-center justify-between py-2">
-                    <span className="font-semibold" style={{ color: 'var(--text-muted)' }}>Total</span>
-                    <span className="text-xl font-bold text-white">${total.toFixed(2)}</span>
+                  <div className="flex items-center justify-between py-3">
+                    <span className="font-semibold text-base" style={{ color: 'var(--text-muted)' }}>Total</span>
+                    <span className="text-3xl font-bold text-white">${total.toFixed(2)}</span>
                   </div>
 
-                  <div className="flex gap-2 mt-3">
-                    <button className="btn-ghost flex-1 py-2 text-sm" onClick={() => setCarrito([])}>
-                      <Trash2 size={14} /> Limpiar
+                  <div className="flex gap-3 mt-2">
+                    <button className="btn-ghost flex-1" onClick={() => setCarrito([])}>
+                      <Trash2 size={15} /> Limpiar
                     </button>
-                    <button className="btn-primary flex-1 py-2 text-sm" onClick={() => setShowPago(true)}>
-                      <CreditCard size={14} /> Cobrar
+                    <button className="btn-primary flex-1" onClick={() => setShowPago(true)}>
+                      <CreditCard size={15} /> Cobrar
                     </button>
                   </div>
                 </>
