@@ -14,7 +14,26 @@
   --glass-bg: rgba(12, 35, 55, 0.6);
   --glass-border: rgba(85, 189, 251, 0.25);
   --glass-shine: rgba(255, 255, 255, 0.08);
+  --sidebar-bg: linear-gradient(180deg, rgba(14,38,60,0.99) 0%, rgba(10,28,46,0.99) 100%);
   --sidebar-w: 240px;
+}
+
+/* ── Modo claro ───────────────────────────────── */
+html.light {
+  --primary: #0080cc;
+  --primary-dark: #006bb0;
+  --primary-light: #2a9de8;
+  --dark: #f0f7ff;
+  --dark-2: #ddeef9;
+  --dark-3: #cce4f5;
+  --dark-4: #b3d4ec;
+  --text: #0c2337;
+  --text-muted: #3a7aaa;
+  --border: rgba(0, 128, 204, 0.2);
+  --glass-bg: rgba(240, 247, 255, 0.75);
+  --glass-border: rgba(0, 128, 204, 0.22);
+  --glass-shine: rgba(255, 255, 255, 0.6);
+  --sidebar-bg: linear-gradient(180deg, rgba(200,230,252,0.99) 0%, rgba(185,220,248,0.99) 100%);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -72,7 +91,45 @@ html, body {
     radial-gradient(ellipse at 80% 80%, rgba(42,157,232,0.06) 0%, transparent 50%),
     var(--dark);
   min-height: 100vh;
+  transition: background 0.3s ease;
 }
+
+html.light .bg-main {
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(0,128,204,0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(42,157,232,0.05) 0%, transparent 50%),
+    var(--dark);
+}
+
+html.light .glass-card {
+  background: linear-gradient(135deg, rgba(220,240,255,0.85) 0%, rgba(200,230,252,0.9) 100%);
+}
+
+html.light .glass {
+  background: rgba(220,240,255,0.75);
+}
+
+html.light .stat-card {
+  background: linear-gradient(135deg, rgba(220,240,255,0.9) 0%, rgba(200,230,252,0.95) 100%);
+}
+
+html.light .input-glass {
+  background: rgba(255,255,255,0.7);
+  color: var(--text);
+}
+
+html.light .select-glass {
+  background: rgba(255,255,255,0.7);
+  color: var(--text);
+}
+
+html.light .select-glass option {
+  background: var(--dark-2);
+  color: var(--text);
+}
+
+html.light ::-webkit-scrollbar-track { background: var(--dark-2); }
+html.light ::-webkit-scrollbar-thumb { background: var(--dark-4); }
 
 .input-glass {
   background: rgba(12,35,55,0.5);

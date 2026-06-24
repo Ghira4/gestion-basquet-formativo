@@ -20,7 +20,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <main
         className="flex-1 overflow-y-auto"
         style={{
-          paddingLeft: 'var(--sidebar-w, 240px)',
+          paddingLeft: 'calc(var(--sidebar-w, 240px) + 12px)',
           transition: 'padding-left 0.3s cubic-bezier(0.4,0,0.2,1)',
         }}
       >

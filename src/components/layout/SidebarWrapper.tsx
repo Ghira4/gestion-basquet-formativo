@@ -10,11 +10,27 @@ interface Props {
 
 export default function SidebarWrapper({ usuario }: Props) {
   const [expanded, setExpanded] = useState(true)
+  const [isDark, setIsDark] = useState(true)
 
-  // Sincroniza el ancho con una CSS var en :root para que el main se ajuste
+  // Sincroniza el ancho con una CSS var en :root
   useEffect(() => {
     document.documentElement.style.setProperty('--sidebar-w', expanded ? '240px' : '68px')
   }, [expanded])
+
+  // Carga preferencia guardada
+  useEffect(() => {
+    const saved = localStorage.getItem('theme')
+    const dark = saved !== 'light'
+    setIsDark(dark)
+    document.documentElement.classList.toggle('light', !dark)
+  }, [])
+
+  function toggleTheme() {
+    const next = !isDark
+    setIsDark(next)
+    document.documentElement.classList.toggle('light', !next)
+    localStorage.setItem('theme', next ? 'dark' : 'light')
+  }
 
   return (
     <>
@@ -39,7 +55,13 @@ export default function SidebarWrapper({ usuario }: Props) {
         className="fixed left-0 top-0 h-full z-40 sidebar"
         style={{ width: expanded ? '240px' : '68px' }}
       >
-        <SidebarInner usuario={usuario} expanded={expanded} setExpanded={setExpanded} />
+        <SidebarInner
+          usuario={usuario}
+          expanded={expanded}
+          setExpanded={setExpanded}
+          isDark={isDark}
+          toggleTheme={toggleTheme}
+        />
       </div>
     </>
   )
