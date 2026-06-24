@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -162,7 +162,7 @@ export default function CajasPage() {
             </div>
           ) : (
             <div className="glass-card overflow-hidden">
-              <table className="table-glass">
+              <div className="table-wrapper"><table className="table-glass">
                 <thead>
                   <tr>
                     <th>Fecha</th>
@@ -197,7 +197,7 @@ export default function CajasPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
             </div>
           )}
         </>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -177,7 +177,7 @@ export default function GastosPage() {
             </div>
           ) : (
             <div className="glass-card overflow-hidden">
-              <table className="table-glass">
+              <div className="table-wrapper"><table className="table-glass">
                 <thead>
                   <tr>
                     <th>Producto</th>
@@ -202,7 +202,7 @@ export default function GastosPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
               <div className="px-4 py-3 flex justify-between" style={{ borderTop: '1px solid var(--border)' }}>
                 <span className="text-sm font-bold" style={{ color: '#f87171' }}>Costo total: -${totalCostoBuffet.toFixed(2)}</span>
                 <span className="text-sm font-bold" style={{ color: gananciaBuffet >= 0 ? '#4ade80' : '#f87171' }}>Ganancia: ${gananciaBuffet.toFixed(2)}</span>
@@ -228,7 +228,7 @@ export default function GastosPage() {
             </div>
           ) : (
             <div className="glass-card overflow-hidden">
-              <table className="table-glass">
+              <div className="table-wrapper"><table className="table-glass">
                 <thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Evento</th><th>Caja</th><th>Monto</th></tr></thead>
                 <tbody>
                   {gastosFiltrados.map(g => (
@@ -242,7 +242,7 @@ export default function GastosPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </table></div>
               <div className="px-4 py-3 flex justify-end" style={{ borderTop: '1px solid var(--border)' }}>
                 <span className="text-sm font-bold" style={{ color: '#f87171' }}>Total: -${totalManual.toFixed(2)}</span>
               </div>

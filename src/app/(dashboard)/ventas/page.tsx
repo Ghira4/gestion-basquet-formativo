@@ -433,7 +433,7 @@ export default function VentasPage() {
               {ventas.length === 0 ? (
                 <p className="text-center py-8 text-sm" style={{ color: 'var(--text-muted)' }}>No hay ventas registradas.</p>
               ) : (
-                <table className="table-glass">
+                <div className="table-wrapper"><table className="table-glass">
                   <thead>
                     <tr>
                       <th>Hora</th>
@@ -472,7 +472,7 @@ export default function VentasPage() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
 

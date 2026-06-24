@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -462,7 +462,7 @@ export default function InformesPage() {
             <div className="glass-card p-5">
               <h3 className="font-bold text-white mb-4">Top productos más vendidos</h3>
               <div className="glass-card overflow-hidden" style={{ background: 'transparent' }}>
-                <table className="table-glass">
+                <div className="table-wrapper"><table className="table-glass">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -481,7 +481,7 @@ export default function InformesPage() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </table></div>
               </div>
             </div>
           )}

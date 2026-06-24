@@ -173,7 +173,8 @@ export default function StockPage() {
             return (
               <div key={cat}>
                 <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--text-muted)' }}>{cat}</h2>
-                <div className="glass-card overflow-hidden">
+                <div className="glass-card">
+                  <div className="table-wrapper">
                   <table className="table-glass">
                     <thead>
                       <tr>
@@ -223,6 +224,7 @@ export default function StockPage() {
                       })}
                     </tbody>
                   </table>
+                  </div>
                 </div>
               </div>
             )
