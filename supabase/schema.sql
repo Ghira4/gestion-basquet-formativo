@@ -110,6 +110,8 @@ ALTER TABLE movimientos_caja ENABLE ROW LEVEL SECURITY;
 
 -- Política: usuarios autenticados ven y modifican todo
 CREATE POLICY "authenticated_all" ON usuarios FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Política: permite insertar en usuarios al registrarse (antes de estar autenticado)
+CREATE POLICY "insert_on_register" ON usuarios FOR INSERT TO anon WITH CHECK (true);
 CREATE POLICY "authenticated_all" ON eventos FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "authenticated_all" ON productos FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "authenticated_all" ON ventas FOR ALL TO authenticated USING (true) WITH CHECK (true);

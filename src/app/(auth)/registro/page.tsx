@@ -36,13 +36,6 @@ export default function RegistroPage() {
     setLoading(true)
     const supabase = createClient()
 
-    const { data: existing } = await supabase.from('usuarios').select('id').eq('dni', form.dni).single()
-    if (existing) {
-      setError('Ya existe una cuenta con ese DNI.')
-      setLoading(false)
-      return
-    }
-
     const emailAuth = `${form.dni}@sccbasquet.internal`
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -50,7 +43,17 @@ export default function RegistroPage() {
       password: form.password,
     })
 
-    if (authError || !authData.user) {
+    if (authError) {
+      if (authError.message.includes('already registered') || authError.message.includes('already been registered')) {
+        setError('Ya existe una cuenta con ese DNI.')
+      } else {
+        setError('Error al crear la cuenta. Intentá de nuevo.')
+      }
+      setLoading(false)
+      return
+    }
+
+    if (!authData.user) {
       setError('Error al crear la cuenta. Intentá de nuevo.')
       setLoading(false)
       return
