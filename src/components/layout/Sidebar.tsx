@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   ShoppingCart, Package, Calendar, Wallet, TrendingDown,
-  TrendingUp, BarChart3, User, LogOut, ChevronLeft, ChevronRight, Menu, Sun, Moon,
+  TrendingUp, BarChart3, User, LogOut, ChevronLeft, ChevronRight, Menu, Sun, Moon, BookOpen,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -19,6 +19,7 @@ const navItems = [
   { href: '/ingresos',  label: 'Ingresos',  icon: TrendingUp },
   { href: '/informes',  label: 'Informes',  icon: BarChart3 },
   { href: '/mi-cuenta', label: 'Mi cuenta', icon: User },
+  { href: '/ayuda',     label: 'Ayuda',     icon: BookOpen },
 ]
 
 interface SidebarProps {
