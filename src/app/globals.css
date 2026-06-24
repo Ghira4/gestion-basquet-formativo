@@ -261,6 +261,34 @@ html.light ::-webkit-scrollbar-thumb { background: var(--dark-4); }
 .animate-slide-in { animation: slideIn 0.3s ease forwards; }
 .animate-spin { animation: spin 1s linear infinite; }
 
+/* ── PWA Window Controls Overlay title bar ─────────────────────── */
+.pwa-titlebar {
+  position: fixed;
+  top: env(titlebar-area-y, 0px);
+  left: env(titlebar-area-x, 0px);
+  width: env(titlebar-area-width, 100%);
+  height: env(titlebar-area-height, 0px);
+  background: #0a1c2e;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  z-index: 99999;
+  -webkit-app-region: drag;
+  app-region: drag;
+  overflow: hidden;
+}
+
+.pwa-titlebar img,
+.pwa-titlebar button {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+@media (display-mode: window-controls-overlay) {
+  body { padding-top: env(titlebar-area-height, 0px); }
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
